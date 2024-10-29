@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlaytoEarn</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: none; /* Initially hide body content */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #e0f7fa, #80deea);
+            color: #333;
+            overflow: hidden; /* Prevent scroll */
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .container:hover {
+            transform: translateY(-5px); /* Lift effect on hover */
+        }
+        h1 {
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #4a90e2; /* Change border color on focus */
+            outline: none; /* Remove default outline */
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 4px;
+            background-color: #4a90e2;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.3s;
+        }
+        button:hover {
+            background-color: #357ABD;
+            transform: scale(1.02); /* Slightly grow on hover */
+        }
+        .toggle {
+            cursor: pointer;
+            color: #4a90e2;
+            text-decoration: underline;
+        }
+        #error {
+            color: red;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Loading Screen Styles */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loader {
+            border: 10px solid #f3f3f3;
+            border-top: 10px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loader"></div>
+    </div>
+
+    <div class="container">
+        <h1 id="formTitle">Sign Up</h1>
+        <div id="signupForm">
+            <input type="text" id="name" placeholder="Name" required>
+            <input type="text" id="number" placeholder="Phone Number" required>
+            <input type="email" id="emailSignup" placeholder="Email" required>
+            <input type="password" id="passwordSignup" placeholder="Password" required>
+            <button id="signupButton">Send OTP</button>
+        </div>
+        <div id="otpForm" style="display: none;">
+            <input type="text" id="otp" placeholder="Enter OTP" required>
+            <button id="verifyOtpButton">Verify OTP</button>
+        </div>
+        <div id="signinForm" style="display: none;">
+            <input type="email" id="emailSignin" placeholder="Email" required>
+            <input type="password" id="passwordSignin" placeholder="Password" required>
+            <button id="signinButton">Sign In</button>
+        </div>
+        <p class="toggle" id="toggleForm"> Sign Up</p>
+        <div id="error"></div>
+    </div>
+
+    <script>
+        // Show loading animation
+        document.getElementById('loading').style.display = 'flex';
+
+        // Simulate a loading delay
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none'; // Hide loading screen
+            document.body.style.display = 'flex'; // Show main content
+        }, 3000); // Adjust time as needed (3000 ms = 3 seconds)
+
+        // Load users and balance from local storage
+        const users = JSON.parse(localStorage.getItem('users')) || {};
+        let balance = parseFloat(localStorage.getItem('balance')) || 0; // Initialize balance
+        const errorDiv = document.getElementById('error');
+        let generatedOtp = null;
+
+        document.getElementById('signupButton').addEventListener('click', function() {
+            const name = document.getElementById('name').value;
+            const number = document.getElementById('number').value;
+            const email = document.getElementById('emailSignup').value;
+            const password = document.getElementById('passwordSignup').value;
+
+            // Check if the number is already registered
+            if (users[number]) {
+                errorDiv.innerText = "This phone number is already registered. Please sign in.";
+                return;
+            }
+
+            // Generate OTP
+            generatedOtp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+            console.log("Generated OTP:", generatedOtp); // Simulate sending OTP
+            alert(`OTP sent to ${number}: ${generatedOtp}`); // Simulate sending the OTP
+
+            // Store user information temporarily until OTP verification
+            users[number] = { name, email, password };
+            localStorage.setItem('users', JSON.stringify(users)); // Save to local storage
+            
+            // Show OTP input
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('otpForm').style.display = 'block';
+            errorDiv.innerText = ''; // Clear previous errors
+        });
+
+        document.getElementById('verifyOtpButton').addEventListener('click', function() {
+            const otpInput = document.getElementById('otp').value;
+
+            // Validate OTP
+            if (otpInput == generatedOtp) {
+                alert("OTP verified successfully! You are now signed up.");
+                document.getElementById('otpForm').style.display = 'none';
+                document.getElementById('signinForm').style.display = 'block'; // Show sign-in form
+                document.getElementById('formTitle').innerText = 'Sign In';
+                document.getElementById('error').innerText = ''; // Clear error message
+            } else {
+                errorDiv.innerText = "Invalid OTP. Please try again.";
+            }
+        });
+
+        document.getElementById('signinButton').addEventListener('click', function() {
+            const email = document.getElementById('emailSignin').value;
+            const password = document.getElementById('passwordSignin').value;
+
+            // Validate user credentials
+            const user = Object.values(users).find(u => u.email === email && u.password === password);
+            if (user) {
+                // Save user balance to local storage
+                localStorage.setItem('balance', balance); 
+                // Directly go to the game page after successful sign-in
+                window.location.href = "game.html"; // Change this to your game page
+            } else {
+                errorDiv.innerText = "Invalid email or password. Please try again.";
+            }
+        });
+
+        document.getElementById('toggleForm').addEventListener('click', toggleForms);
+
+        function toggleForms() {
+            const signupForm = document.getElementById('signupForm');
+            const signinForm = document.getElementById('signinForm');
+            const otpForm = document.getElementById('otpForm');
+            const formTitle = document.getElementById('formTitle');
+
+            if (signupForm.style.display === 'none') {
+                signupForm.style.display = 'block';
+                signinForm.style.display = 'none';
+                otpForm.style.display = 'none';
+                formTitle.innerText = 'Sign Up';
+                document.getElementById('error').innerText = ''; // Clear error message
+                document.getElementById('toggleForm').innerText = 'Sign In'; // Change toggle text
+            } else {
+                signupForm.style.display = 'none';
+                signinForm.style.display = 'block';
+                otpForm.style.display = 'none';
+                formTitle.innerText = 'Sign In';
+                document.getElementById('error').innerText = ''; // Clear error message
+                document.getElementById('toggleForm').innerText = 'Sign Up'; // Change toggle text
+            }
+        }
+
+        // Function to update balance
+        function updateBalance(amount) {
+            balance += amount;
+            localStorage.setItem('balance', balance); // Save updated balance
+        }
+
+        // Function to get current balance
+        function getBalance() {
+            return balance;
+        }
+    </script>
+</body>
+</html>
+
